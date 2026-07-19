@@ -1,0 +1,142 @@
+.navbar {
+  background-color: #1a1a2e;
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.navbar-logo img {
+  height: 40px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.nav-link:hover {
+  color: var(--cor-primaria, #eb662b);
+}
+
+.nav-link.as-button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.nav-link.as-button:hover {
+  color: var(--cor-primaria, #eb662b);
+}
+
+.nav-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nav-button {
+  padding: 8px 16px;
+  border: 1px solid var(--cor-primaria, #eb662b);
+  border-radius: 25px;
+  background: transparent;
+  color: var(--cor-primaria, #eb662b);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.nav-button:hover {
+  background: rgba(235, 102, 43, 0.1);
+}
+
+.nav-button.primary {
+  background: var(--cor-primaria, #eb662b);
+  color: #fff;
+  border: 1px solid var(--cor-primaria, #eb662b);
+}
+
+.nav-button.primary:hover {
+  background: var(--cor-hover, #d84606);
+}
+
+.nav-profile-icon {
+  color: #fff;
+  display: flex;
+  align-items: center;
+}
+
+.desktop-actions {
+  display: flex;
+  align-items: center;
+}
+
+.menu-icon {
+  display: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.mobile-nav-menu {
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+  background-color: #1a1a2e;
+  width: 100%;
+}
+
+.mobile-nav-menu .nav-link,
+.mobile-nav-menu .nav-link.as-button {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .desktop-actions {
+    display: none;
+  }
+
+  .menu-icon {
+    display: block;
+  }
+
+  .mobile-nav-menu {
+    display: flex;
+  }
+}

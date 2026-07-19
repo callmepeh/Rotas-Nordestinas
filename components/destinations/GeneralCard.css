@@ -1,0 +1,33 @@
+.info-card-item {
+  min-width: 250px;
+  max-width: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.info-card-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.info-card-body {
+  padding: 15px;
+}
+
+.info-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: #333;
+}
+
+.info-card-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}

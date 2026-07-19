@@ -1,0 +1,28 @@
+.info-carousel-section {
+  margin-bottom: 40px;
+}
+
+.info-carousel-title {
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--cor-primaria, #eb662b);
+}
+
+.info-carousel-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 15px;
+  scroll-snap-type: x mandatory;
+}
+
+.info-carousel-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.info-carousel-container::-webkit-scrollbar-thumb {
+  background: var(--cor-cinza-secundario, #adadad);
+  border-radius: 4px;
+}

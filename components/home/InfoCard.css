@@ -1,0 +1,30 @@
+.info-card {
+  text-align: center;
+  padding: 30px 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+}
+
+.info-card-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 15px;
+}
+
+.info-card-title {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.info-card-text {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}

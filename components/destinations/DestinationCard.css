@@ -1,0 +1,40 @@
+.destination-card-link {
+  text-decoration: none;
+  color: inherit;
+  min-width: 250px;
+  max-width: 250px;
+}
+
+.destination-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 300px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.destination-card:hover {
+  transform: scale(1.03);
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 15px;
+}
+
+.card-title {
+  color: #fff;
+  margin: 0;
+  font-size: 18px;
+}

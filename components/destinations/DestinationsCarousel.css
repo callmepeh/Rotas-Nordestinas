@@ -1,0 +1,33 @@
+.carousel-section {
+  margin-bottom: 40px;
+}
+
+.carousel-title {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--cor-primaria, #eb662b);
+}
+
+.carousel-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 15px;
+  scroll-snap-type: x mandatory;
+}
+
+.carousel-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.carousel-container::-webkit-scrollbar-thumb {
+  background: var(--cor-cinza-secundario, #adadad);
+  border-radius: 4px;
+}
+
+.carousel-container::-webkit-scrollbar-track {
+  background: var(--cor-cinza-principal, #e9e9e9);
+  border-radius: 4px;
+}
