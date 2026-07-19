@@ -56,7 +56,7 @@ export const sugerirRota = async (req, res) => {
 
     // 🔥 Inserir no banco
     const { error } = await supabase
-      .from("Sugestoes_de_Rota")
+      .from("sugestoes_de_rota")
       .insert([payload]);
 
     if (error) {

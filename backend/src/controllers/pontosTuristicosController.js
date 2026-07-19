@@ -6,7 +6,7 @@ exports.listarPorCidade = async (req, res) => {
     const { cidadeId } = req.params;
 
     const { data, error } = await supabase
-      .from("Pontos_Turisticos")
+      .from("pontos_turisticos")
       .select("*")
       .eq("cidadeID", cidadeId);
 

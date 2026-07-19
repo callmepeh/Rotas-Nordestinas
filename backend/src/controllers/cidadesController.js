@@ -6,7 +6,7 @@ const supabase = require("../database/supabaseClient.js");
 exports.listarTodas = async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from("Cidades")
+      .from("cidades")
       .select(`
   id,
   nomeCidade,
@@ -47,7 +47,7 @@ exports.buscarPorNome = async (req, res) => {
     const nome = req.query.nome;
 
     const { data, error } = await supabase
-      .from("Cidades")
+      .from("cidades")
       .select(`
   id,
   nomeCidade,
@@ -86,7 +86,7 @@ exports.listarPorEstado = async (req, res) => {
     const { estadoID } = req.params;
 
     const { data, error } = await supabase
-      .from("Cidades")
+      .from("cidades")
       .select(`
   id,
   nomeCidade,
@@ -125,7 +125,7 @@ exports.buscarPorId = async (req, res) => {
     const { id } = req.params;
 
     const { data: cidade, error } = await supabase
-      .from("Cidades")
+      .from("cidades")
       .select(`
   id,
   nomeCidade,

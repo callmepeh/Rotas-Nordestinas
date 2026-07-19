@@ -1,7 +1,7 @@
+const path = require("path");
 const dns = require('node:dns');
 dns.setDefaultResultOrder('ipv4first');
-
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const express = require("express");
 const cors = require("cors");
 
@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 console.log("URL:", process.env.SUPABASE_URL);
-console.log("ROLE KEY:", process.env.SUPABASE_SERVICE_ROLE ? "OK" : "Vazia");
+console.log("ROLE KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "OK" : "Vazia");
 
 // Rotas
 const authRoutes = require("./routes/authRoutes.js");
@@ -40,6 +40,12 @@ app.use("/como-chegar", comoChegarRoutes);
 
 const userRoutes = require("./routes/userRoutes.js");
 app.use("/usuarios", userRoutes);
+
+const usuariosRoutes = require("./routes/usuariosRoutes.js");
+app.use("/usuarios-admin", usuariosRoutes);
+
+const localizacoesRoutes = require("./routes/localizacoesRoutes.js");
+app.use("/localizacoes", localizacoesRoutes);
 
 // Rodar servidor somente fora de testes
 if (process.env.NODE_ENV !== "test") {

@@ -8,7 +8,7 @@ exports.adicionarFavorito = async (req, res) => {
     const supabase = supabaseWithAuth(token);
 
     const { data, error } = await supabase
-      .from("Favoritos")
+      .from("favoritos")
       .insert([{ userID, cidadeID }])
       .select();
 
@@ -32,7 +32,7 @@ exports.removerFavorito = async (req, res) => {
     const supabase = supabaseWithAuth(token);
 
     const { error } = await supabase
-      .from("Favoritos")
+      .from("favoritos")
       .delete()
       .eq("userID", userID)
       .eq("cidadeID", cidadeID);
@@ -56,7 +56,7 @@ exports.listarFavoritos = async (req, res) => {
     const supabase = supabaseWithAuth(token);
 
     const { data, error } = await supabase
-      .from("Favoritos")
+      .from("favoritos")
       .select(`
         id,
         cidadeID,

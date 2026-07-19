@@ -39,7 +39,7 @@ exports.register = async (req, res) => {
     console.log("🟦 Inserindo usuário na tabela Users...");
 
     const { error: insertError } = await supabase
-      .from("Users")
+      .from("users")
       .insert([
         {
           id: userId,
@@ -87,7 +87,7 @@ exports.login = async (req, res) => {
     const userId = loginData.user.id;
 
     const { data: profile, error: profileError } = await supabase
-      .from("Users")
+      .from("users")
       .select("*")
       .eq("id", userId)
       .single();
@@ -117,7 +117,7 @@ exports.me = async (req, res) => {
     const userId = req.user.id;
 
     const { data: user, error } = await supabase
-      .from("Users")
+      .from("users")
       .select("*")
       .eq("id", userId)
       .single();
@@ -158,7 +158,7 @@ exports.updateProfile = async (req, res) => {
     }
 
     const { data, error } = await supabase
-      .from("Users")
+      .from("users")
       .update({
         ...updates,
         ...(novaFuncao && { funcao: novaFuncao })
