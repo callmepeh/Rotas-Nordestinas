@@ -1,0 +1,64 @@
+# ============================================================================
+# ROTAS NORDESTINAS — Dockerfile: Portal & Auth Service
+# Tecnologia: Next.js 15 / TypeScript / JWT
+# Provedor: AWS (EC2 / ECS)
+# ============================================================================
+
+# ─── Stage 1: Builder ──────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Instalar dependências primeiro (melhor cache de camadas)
+COPY package*.json ./
+RUN npm ci
+
+# Copiar código fonte
+COPY . .
+
+# Gerar Prisma Client
+RUN npx prisma generate
+
+# Build de produção
+RUN npm run build
+
+# ─── Stage 2: Runner ──────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+# Instalar dependências do sistema
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Configurar NODE_ENV
+ENV NODE_ENV=production
+
+# Copiar dependências necessárias
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/next.config.ts ./
+
+# Gerar Prisma Client no runner
+RUN npx prisma generate
+
+# Criar usuário não-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Permissões
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
+# Porta do serviço
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# Iniciar aplicação
+CMD ["npm", "start"]

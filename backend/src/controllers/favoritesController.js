@@ -2,14 +2,11 @@ const supabase = require("../database/supabaseClient.js");
 
 exports.adicionarFavorito = async (req, res) => {
   try {
-    const { userID, cidadeID } = req.body;
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
-    const supabase = supabaseWithAuth(token);
+    const { userid, cidadeID } = req.body;
 
     const { data, error } = await supabase
       .from("favoritos")
-      .insert([{ userID, cidadeID }])
+      .insert([{ userid, cidadeID }])
       .select();
 
     if (error) {
@@ -26,16 +23,13 @@ exports.adicionarFavorito = async (req, res) => {
 
 exports.removerFavorito = async (req, res) => {
   try {
-    const { userID, cidadeID } = req.body;
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
-    const supabase = supabaseWithAuth(token);
+    const { userid, cidadeID } = req.body;
 
     const { error } = await supabase
       .from("favoritos")
       .delete()
-      .eq("userID", userID)
-      .eq("cidadeID", cidadeID);
+      .eq("userid", userid)
+      .eq("cidadeid", cidadeID);
 
     if (error) {
       return res.status(400).json({ error: error.message });
@@ -51,31 +45,27 @@ exports.removerFavorito = async (req, res) => {
 exports.listarFavoritos = async (req, res) => {
   try {
     const { userID } = req.params;
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
-    const supabase = supabaseWithAuth(token);
 
     const { data, error } = await supabase
       .from("favoritos")
       .select(`
         id,
         cidadeID,
-        Cidades (
-          nome,
-          cidade,
-          urlImagem
+        cidades (
+          nomecidade,
+          url_imagem
         )
       `)
-      .eq("userID", userID);
+      .eq("userid", userid);
 
     if (error) return res.status(400).json({ error: error.message });
 
     const favoritosFormatados = data.map(fav => ({
       id: fav.id,
       rotaID: fav.cidadeID,
-      nome_rota: fav.Cidades?.nome ?? "",
-      cidade: fav.Cidades?.cidade ?? "",
-      urlImagem: fav.Cidades?.urlImagem ?? ""
+      nome_rota: fav.cidades?.nomecidade ?? "",
+      cidade: fav.cidades?.nomecidade ?? "",
+      urlImagem: fav.cidades?.url_imagem ?? ""
     }));
 
     return res.json(favoritosFormatados);

@@ -3,17 +3,17 @@ import { supabase } from "@/lib/supabaseClient";
 
 const cidadeSelect = `
   id,
-  nomeCidade,
+  nomecidade,
   url_imagem,
   descricao,
   latitude,
   longitude,
-  estados:estadoID (
+  estados:estadoid (
     id,
     nome,
     sigla
   ),
-  usuario:userID (
+  usuario:userid (
     id,
     nomeCompleto
   )
@@ -21,7 +21,7 @@ const cidadeSelect = `
 
 export async function GET() {
   try {
-    const { data, error } = await supabase.from("Cidades").select(cidadeSelect);
+    const { data, error } = await supabase.from("cidades").select(cidadeSelect);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

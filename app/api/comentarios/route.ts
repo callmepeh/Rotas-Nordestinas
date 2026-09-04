@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userID, cidadeID, mensagem } = await req.json();
+    const { userid: userID, cidadeid: cidadeID, mensagem } = await req.json();
 
     if (!userID || !cidadeID) {
       return NextResponse.json(
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from("Comentarios")
-      .insert([{ userID, cidadeID, mensagem }])
+      .from("comentarios")
+      .insert([{ userid: userID, cidadeid: cidadeID, mensagem }])
       .select();
 
     if (error) {

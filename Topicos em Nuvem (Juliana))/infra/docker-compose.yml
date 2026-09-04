@@ -1,0 +1,173 @@
+version: '3.8'
+
+# ============================================================================
+# ROTAS NORDESTINAS — Docker Compose (Desenvolvimento Local)
+# Disciplina: TES (Graduação) + TSD (Pós-Graduação)
+# Profª: Juliana Oliveira de Carvalho — UFPI 2026.2
+# ============================================================================
+
+services:
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # BANCO DE DADOS: Auth DB (Portal & Auth Service)
+  # ────────────────────────────────────────────────────────────────────────────
+  auth-db:
+    image: postgres:16-alpine
+    container_name: rotas-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rotas_auth_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-auth_secret_2026}
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - rotas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d rotas_auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # BANCO DE DADOS: Core DB (Destinos Core Service)
+  # ────────────────────────────────────────────────────────────────────────────
+  core-db:
+    image: postgres:16-alpine
+    container_name: rotas-core-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rotas_core_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${CORE_DB_PASSWORD:-core_secret_2026}
+    volumes:
+      - core_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - rotas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d rotas_core_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # MICROSSERVIÇO 1: Portal & Auth Service
+  # Tecnologia: Next.js / TypeScript / JWT
+  # Provedor: AWS (EC2 / ECS)
+  # ────────────────────────────────────────────────────────────────────────────
+  portal-auth:
+    build:
+      context: ../portal-auth-service
+      dockerfile: Dockerfile
+    container_name: rotas-portal-auth
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://admin:${AUTH_DB_PASSWORD:-auth_secret_2026}@auth-db:5432/rotas_auth_db
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-key-2026}
+      JWT_EXPIRES_IN: 7d
+      DESTINOS_CORE_URL: http://destinos-core:3001
+      ANALYTICS_URL: http://analytics:3002
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      destinos-core:
+        condition: service_started
+      analytics:
+        condition: service_started
+    networks:
+      - rotas-network
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # MICROSSERVIÇO 2: Destinos Core Service
+  # Tecnologia: Node.js / Express / PostgreSQL / Prisma
+  # Provedor: AWS (EC2 / ECS / RDS)
+  # ────────────────────────────────────────────────────────────────────────────
+  destinos-core:
+    build:
+      context: ../destinos-core-service
+      dockerfile: Dockerfile
+    container_name: rotas-destinos-core
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://admin:${CORE_DB_PASSWORD:-core_secret_2026}@core-db:5432/rotas_core_db
+      ANALYTICS_URL: http://analytics:3002
+      ANALYTICS_EVENT_URL: http://analytics:3002/api/analytics/event
+    depends_on:
+      core-db:
+        condition: service_healthy
+    networks:
+      - rotas-network
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # MICROSSERVIÇO 3: Analytics & Notification Service
+  # Tecnologia: Node.js / SQLite
+  # Provedor: GCP (Compute Engine)
+  # ────────────────────────────────────────────────────────────────────────────
+  analytics:
+    build:
+      context: ../analytics-service
+      dockerfile: Dockerfile
+    container_name: rotas-analytics
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: production
+      DB_PATH: /data/analytics.db
+      PORT: 3002
+    volumes:
+      - analytics_data:/data
+    networks:
+      - rotas-network
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # OPÇÃO MULTINUVEL: RabbitMQ (alternativa ao Cloud Pub/Sub)
+  # Usado na fase TSD (Pós-Graduação) para comunicação inter-cloud
+  # ────────────────────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rotas-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbit_secret_2026}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - rotas-network
+
+# ──────────────────────────────────────────────────────────────────────────────
+# VOLUMES PERSISTENTES
+# ──────────────────────────────────────────────────────────────────────────────
+volumes:
+  auth_data:
+    driver: local
+  core_data:
+    driver: local
+  analytics_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+# ──────────────────────────────────────────────────────────────────────────────
+# REDE COMpartilhada
+# ──────────────────────────────────────────────────────────────────────────────
+networks:
+  rotas-network:
+    driver: bridge
+    name: rotas-nordestinas-network

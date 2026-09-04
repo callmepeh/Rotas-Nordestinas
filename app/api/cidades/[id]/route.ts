@@ -3,17 +3,17 @@ import { supabase } from "@/lib/supabaseClient";
 
 const cidadeSelect = `
   id,
-  nomeCidade,
+  nomecidade,
   url_imagem,
   descricao,
   latitude,
   longitude,
-  estados:estadoID (
+  estados:estadoid (
     id,
     nome,
     sigla
   ),
-  usuario:userID (
+  usuario:userid (
     id,
     nomeCompleto
   )
@@ -27,7 +27,7 @@ export async function GET(
     const { id } = await params;
 
     const { data: cidade, error } = await supabase
-      .from("Cidades")
+      .from("cidades")
       .select(cidadeSelect)
       .eq("id", id)
       .single();

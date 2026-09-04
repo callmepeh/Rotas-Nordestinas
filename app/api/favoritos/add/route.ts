@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userID, cidadeID } = body;
+    const { userid: userID, cidadeid: cidadeID } = body;
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
 
     if (!token) {
@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from("Favoritos")
-      .insert([{ userID, cidadeID }])
+      .from("favoritos")
+      .insert([{ userid: userID, cidadeid: cidadeID }])
       .select();
 
     if (error) {

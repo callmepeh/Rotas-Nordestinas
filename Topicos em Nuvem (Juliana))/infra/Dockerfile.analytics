@@ -1,0 +1,50 @@
+# ============================================================================
+# ROTAS NORDESTINAS — Dockerfile: Analytics & Notification Service
+# Tecnologia: Node.js / SQLite
+# Provedor: GCP (Compute Engine)
+# ============================================================================
+
+# ─── Stage 1: Builder ──────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+# ─── Stage 2: Runner ──────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Diretório para o banco SQLite
+RUN mkdir -p /data
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
+
+# Criar usuário não-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 appuser
+
+# Permissões no diretório de dados
+RUN chown -R appuser:nodejs /app
+RUN chown -R appuser:nodejs /data
+
+USER appuser
+
+EXPOSE 3002
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3002/api/health || exit 1
+
+CMD ["node", "dist/server.js"]

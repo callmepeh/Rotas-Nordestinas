@@ -24,7 +24,7 @@ export async function PUT(
     }
 
     const { data, error } = await supabase
-      .from("Comentarios")
+      .from("comentarios")
       .update({ mensagem })
       .eq("id", id)
       .select();
@@ -70,7 +70,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
-    const { error } = await supabase.from("Comentarios").delete().eq("id", id);
+    const { error } = await supabase.from("comentarios").delete().eq("id", id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

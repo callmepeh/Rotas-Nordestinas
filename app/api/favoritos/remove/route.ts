@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 export async function DELETE(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userID, cidadeID } = body;
+    const { userid: userID, cidadeid: cidadeID } = body;
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
 
     if (!token) {
@@ -27,10 +27,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     const { error } = await supabase
-      .from("Favoritos")
+      .from("favoritos")
       .delete()
-      .eq("userID", userID)
-      .eq("cidadeID", cidadeID);
+      .eq("userid", userID)
+      .eq("cidadeid", cidadeID);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

@@ -27,8 +27,8 @@ exports.listarCidadesPorEstado = async (req, res) => {
     const { data, error } = await supabase
       .from("cidades")
       .select("id, nomeCidade, url_imagem, latitude, longitude")
-      .eq("estadoID", estadoID)
-      .order("nomeCidade", { ascending: true });
+      .eq("estadoid", estadoID)
+      .order("nomecidade", { ascending: true });
 
     if (error) {
       return res.status(400).json({ error: error.message });

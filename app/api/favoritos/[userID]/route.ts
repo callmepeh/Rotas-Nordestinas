@@ -29,19 +29,19 @@ export async function GET(
     }
 
     const { data, error } = await supabase
-      .from("Favoritos")
+      .from("favoritos")
       .select(
         `
         id,
         cidadeID,
         Cidades (
           id,
-          nomeCidade,
+          nomecidade,
           url_imagem
         )
       `
       )
-      .eq("userID", userID);
+      .eq("userid", userID);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -50,7 +50,7 @@ export async function GET(
     const favoritosFormatados = (data || []).map((fav: any) => ({
       id: fav.id,
       cidadeID: fav.cidadeID,
-      nomeCidade: fav.Cidades?.nomeCidade ?? "",
+      nomecidade: fav.Cidades?.nomecidade ?? "",
       url_imagem: fav.Cidades?.url_imagem ?? "",
     }));
 

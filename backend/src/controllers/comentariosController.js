@@ -3,7 +3,7 @@ const supabase = require("../database/supabaseClient");
 // Adicionar comentário
 exports.adicionar = async (req, res) => {
   try {
-    const { userID, cidadeID, mensagem } = req.body;
+    const { userid, cidadeID, mensagem } = req.body;
 
     if (!userID || !cidadeID) {
       return res.status(400).json({ error: "userID e cidadeID são obrigatórios." });
@@ -13,8 +13,8 @@ exports.adicionar = async (req, res) => {
       .from("comentarios")
       .insert([
         {
-          userID: userID,
-          cidadeID: cidadeID,
+          userid: userid,
+          cidadeid: cidadeID,
           mensagem,
         },
       ])
@@ -40,7 +40,7 @@ exports.listarPorCidade = async (req, res) => {
     const { data: comentarios, error: comentariosError } = await supabase
       .from("comentarios")
       .select("*")
-      .eq("cidadeID", cidadeId)
+      .eq("cidadeid", cidadeId)
       .order("created_at", { ascending: false });
 
     if (comentariosError) {

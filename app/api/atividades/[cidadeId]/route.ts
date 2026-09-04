@@ -9,9 +9,9 @@ export async function GET(
     const { cidadeId } = await params;
 
     const { data, error } = await supabase
-      .from("Atividades")
+      .from("atividades")
       .select("*")
-      .eq("cidadeID", cidadeId);
+      .eq("cidadeid", cidadeId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

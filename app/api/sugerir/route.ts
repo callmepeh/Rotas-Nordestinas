@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     const {
       estado,
-      nomeCidade,
+      nomecidade,
       latitude,
       longitude,
       imagemCapa,
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       dicas,
     } = await req.json();
 
-    if (!estado || !nomeCidade) {
+    if (!estado || !nomecidade) {
       return NextResponse.json(
         { error: "Estado e cidade são obrigatórios." },
         { status: 400 }
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const payload = {
       userID,
       estado,
-      nomeCidade,
+      nomecidade,
       imagemCapa: imagemCapa || null,
       descricaoCidade: descricaoCidade || null,
       comoChegar: JSON.stringify(comoChegar || []),
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       cidadeID: null,
     };
 
-    const { error } = await supabase.from("Sugestoes_de_Rota").insert([payload]);
+    const { error } = await supabase.from("sugestoes_de_rota").insert([payload]);
 
     if (error) {
       console.error("ERRO SUPABASE AO INSERIR:", error);

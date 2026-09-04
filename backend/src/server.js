@@ -47,6 +47,9 @@ app.use("/usuarios-admin", usuariosRoutes);
 const localizacoesRoutes = require("./routes/localizacoesRoutes.js");
 app.use("/localizacoes", localizacoesRoutes);
 
+const sugerirRoutes = require("./routes/sugerirRoutes.js");
+app.use("/sugerir", sugerirRoutes);
+
 // Rodar servidor somente fora de testes
 if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {

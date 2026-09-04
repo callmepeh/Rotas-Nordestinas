@@ -1,6 +1,6 @@
-import supabase from "../config/supabaseClient.js";
+const supabase = require("../database/supabaseClient.js");
 
-export const sugerirRota = async (req, res) => {
+exports.sugerirRota = async (req, res) => {
   try {
     const userID = req.user.id; // vem do token JWT
 
@@ -32,7 +32,7 @@ export const sugerirRota = async (req, res) => {
 
     // 🔥 Preparar dados para a tabela
     const payload = {
-      userID,
+      userid,
       estado,
       nomeCidade,
       imagemCapa: imagemCapa || null,

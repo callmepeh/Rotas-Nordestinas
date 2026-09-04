@@ -49,7 +49,7 @@ export async function PUT(
     }
 
     const { data, error } = await supabase
-      .from("Users")
+      .from("users")
       .update({
         ...updates,
         ...(novaFuncao && { funcao: novaFuncao }),

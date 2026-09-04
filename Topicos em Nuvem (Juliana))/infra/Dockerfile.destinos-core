@@ -1,0 +1,57 @@
+# ============================================================================
+# ROTAS NORDESTINAS — Dockerfile: Destinos Core Service
+# Tecnologia: Node.js / Express / PostgreSQL / Prisma
+# Provedor: AWS (EC2 / ECS / RDS)
+# ============================================================================
+
+# ─── Stage 1: Builder ──────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Instalar dependências
+COPY package*.json ./
+RUN npm ci
+
+# Copiar código fonte
+COPY . .
+
+# Gerar Prisma Client
+RUN npx prisma generate
+
+# Compilar TypeScript
+RUN npm run build
+
+# ─── Stage 2: Runner ──────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+RUN apk add --no-cache libc6-compat openssl
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copiar dependências necessárias
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/tsconfig.json ./
+
+# Gerar Prisma Client no runner
+RUN npx prisma generate
+
+# Criar usuário não-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 appuser
+
+RUN chown -R appuser:nodejs /app
+
+USER appuser
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
+
+CMD ["node", "dist/server.js"]

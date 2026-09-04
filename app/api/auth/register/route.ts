@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { error: insertError } = await supabaseAdmin
-      .from("Users")
+      .from("users")
       .insert([
         {
           id: userId,

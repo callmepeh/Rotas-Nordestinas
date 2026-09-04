@@ -9,19 +9,19 @@ exports.listarTodas = async (req, res) => {
       .from("cidades")
       .select(`
   id,
-  nomeCidade,
+  nomecidade,
   url_imagem,
   descricao,
   latitude,
   longitude,
-  estados:estadoID (
+  estados:estadoid (
     id,
     nome,
     sigla
   ),
-  usuario:userID (
+  usuario:userid (
     id,
-    nomeCompleto
+    nomecompleto
   )
 `)
 
@@ -50,23 +50,23 @@ exports.buscarPorNome = async (req, res) => {
       .from("cidades")
       .select(`
   id,
-  nomeCidade,
+  nomecidade,
   url_imagem,
   descricao,
   latitude,
   longitude,
-  estados:estadoID (
+  estados:estadoid (
     id,
     nome,
     sigla
   ),
-  usuario:userID (
+  usuario:userid (
     id,
-    nomeCompleto
+    nomecompleto
   )
 `)
 
-      .ilike("nomeCidade", `%${nome}%`);
+      .ilike("nomecidade", `%${nome}%`);
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -79,33 +79,33 @@ exports.buscarPorNome = async (req, res) => {
 };
 
 // =========================
-// GET /cidades/estado/:estadoID
+// GET /cidades/estado/:estadoid
 // =========================
 exports.listarPorEstado = async (req, res) => {
   try {
-    const { estadoID } = req.params;
+    const { estadoid } = req.params;
 
     const { data, error } = await supabase
       .from("cidades")
       .select(`
   id,
-  nomeCidade,
+  nomecidade,
   url_imagem,
   descricao,
   latitude,
   longitude,
-  estados:estadoID (
+  estados:estadoid (
     id,
     nome,
     sigla
   ),
-  usuario:userID (
+  usuario:userid (
     id,
-    nomeCompleto
+    nomecompleto
   )
 `)
 
-      .eq("estadoID", estadoID);
+      .eq("estadoid", estadoid);
 
     if (error) return res.status(500).json({ error: error.message });
 
@@ -128,19 +128,19 @@ exports.buscarPorId = async (req, res) => {
       .from("cidades")
       .select(`
   id,
-  nomeCidade,
+  nomecidade,
   url_imagem,
   descricao,
   latitude,
   longitude,
-  estados:estadoID (
+  estados:estadoid (
     id,
     nome,
     sigla
   ),
-  usuario:userID (
+  usuario:userid (
     id,
-    nomeCompleto
+    nomecompleto
   )
 `)
 

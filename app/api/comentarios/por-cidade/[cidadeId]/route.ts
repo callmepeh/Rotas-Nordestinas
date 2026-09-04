@@ -9,9 +9,9 @@ export async function GET(
     const { cidadeId } = await params;
 
     const { data: comentarios, error: comentariosError } = await supabase
-      .from("Comentarios")
+      .from("comentarios")
       .select("*")
-      .eq("cidadeID", cidadeId)
+      .eq("cidadeid", cidadeId)
       .order("created_at", { ascending: false });
 
     if (comentariosError) {
@@ -40,7 +40,7 @@ export async function GET(
     }
 
     const { data: usuarios, error: usuariosError } = await supabase
-      .from("Users")
+      .from("users")
       .select("id, nomeCompleto")
       .in("id", userIds);
 

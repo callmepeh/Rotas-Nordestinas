@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const userId = loginData.user.id;
 
     const { data: profile, error: profileError } = await supabase
-      .from("Users")
+      .from("users")
       .select("*")
       .eq("id", userId)
       .single();
