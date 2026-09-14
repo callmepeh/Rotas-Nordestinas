@@ -30,30 +30,103 @@ O **Rotas Nordestinas** é uma plataforma web que reúne **rotas turísticas, cu
 
 ## 🏗️ Arquitetura
 
-O sistema é uma **arquitetura em microsserviços** com 3 serviços independentes:
+O sistema é uma **arquitetura em microsserviços** com 3 serviços independentes, expostos por um **API Gateway** e desacoplados por um **barramento de eventos**. Os dois diagramas abaixo explicam a aplicação: o primeiro mostra o **fluxo lógico de requisições e eventos**; o segundo, a **visão de deploy multi-cloud**.
 
+### 1️⃣ Visão Lógica — Fluxo de Requisições e Eventos
+
+```mermaid
+flowchart LR
+    U1(["👤 Usuário"])
+    U2(["👤 Usuário"])
+    GW(["API<br/>Gateway"])
+
+    subgraph AWS["☁️ AWS — Core da Aplicação"]
+        DEST(["DESTINO<br/>SERVICE"])
+        DDB[("🗄️ PostgreSQL")]
+        AUTH(["AUTH<br/>SERVICE"])
+        ADB[("🗄️ PostgreSQL")]
+    end
+
+    subgraph GCP["☁️ GCP — Analytics"]
+        BROKER(["PUB/SUB<br/>BROKER"])
+        ANA(["Analytics<br/>Service"])
+        GDB[("🗄️ SQLite")]
+    end
+
+    U1 --> GW
+    U2 --> GW
+    GW --> DEST
+    GW --> AUTH
+    DEST -->|Query| DDB
+    AUTH -->|Query| ADB
+    DEST -. "Async event 'view'" .-> BROKER
+    BROKER -.->|Subscribe| ANA
+    ANA -->|Query| GDB
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                  ROTAS NORDESTINAS                          │
-│              Arquitetura em Microsserviços                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────┐   HTTP/REST   ┌──────────┐  Pub/Sub  ┌──────┐│
-│  │ Portal   │◄─────────────►│ Destinos │◄─────────►│Analyt││
-│  │ & Auth   │   (síncrono)  │  Core    │ (assínc.) │ics   ││
-│  │          │               │          │           │      ││
-│  │ Next.js  │               │ Express  │           │Node  ││
-│  │ JWT      │               │ Prisma   │           │SQLite││
-│  └────┬─────┘               └────┬─────┘           └──┬───┘│
-│       │                          │                    │    │
-│  ┌────▼─────┐               ┌────▼─────┐           ┌──▼───┐│
-│  │PostgreSQL│               │PostgreSQL│           │SQLite││
-│  │ (Auth DB)│               │ (Core DB)│           │      ││
-│  └──────────┘               └──────────┘           └──────┘│
-│                                                             │
-│       AWS                    AWS                     GCP    │
-└─────────────────────────────────────────────────────────────┘
+
+**Como a aplicação funciona neste fluxo:**
+
+1. **Entrada única:** todos os usuários passam pelo **API Gateway**, responsável por HTTPS, roteamento e autenticação.
+2. **Conteúdo turístico (síncrono):** o gateway roteia para o **Destino Service**, que consulta seu PostgreSQL isolado e devolve cidades, pontos turísticos, como chegar, atividades, dicas, comentários e favoritos.
+3. **Identidade (síncrona):** cadastro, login e perfil passam pelo **Auth Service**, que consulta seu próprio PostgreSQL e emite tokens **JWT**.
+4. **Telemetria (assíncrona):** quando um usuário visualiza um destino, o Destino Service publica o evento `"view"` no **Pub/Sub Broker** e responde ao usuário sem esperar. O **Analytics Service** (GCP) assina o tópico, consome o evento em background e grava as métricas no **SQLite** — a navegação nunca bloqueia por causa de analytics.
+
+### 2️⃣ Visão Multi-cloud — Deploy AWS + GCP
+
+```mermaid
+flowchart LR
+    CLIENT["WEB CLIENT<br/>Next.js • React • TypeScript"]
+
+    subgraph AWS["AWS CLOUD — CORE DA APLICAÇÃO"]
+        GW["API GATEWAY<br/>HTTPS • Routing • Authentication"]
+        ID["IDENTITY SERVICE<br/>Node.js • JWT"]
+        IDB[("Identity DB<br/>PostgreSQL")]
+        DS["DESTINATIONS SERVICE<br/>Node.js • Express • Prisma"]
+        DDB[("Destinations DB<br/>PostgreSQL")]
+        BUS["EVENT BUS<br/>SNS → SQS"]
+    end
+
+    subgraph GCP["GCP CLOUD — ANALYTICS"]
+        ANA["ANALYTICS SERVICE<br/>Node.js Worker"]
+        ADB[("Analytics DB<br/>SQLite")]
+    end
+
+    CLIENT -->|REST| GW
+    GW -->|REST| ID
+    GW -->|REST| DS
+    ID -->|DB| IDB
+    DS -->|DB| DDB
+    DS -.->|EVENT| BUS
+    BUS -.->|Subscribe| ANA
+    ANA -->|DB| ADB
 ```
+
+**Correspondência com os microsserviços do projeto:**
+
+| Diagrama | Microsserviço do projeto | Provedor |
+|----------|--------------------------|----------|
+| Identity Service | **Portal & Auth** | AWS |
+| Destinations Service | **Destinos Core** | AWS |
+| Analytics Service | **Analytics & Notification** | GCP |
+
+**Legenda:**
+
+| Símbolo | Significado |
+|---------|-------------|
+| ➡️ `REST` | Comunicação **síncrona** (resposta imediata) |
+| ⤍ `EVENT` | Comunicação **assíncrona** (evento desacoplado) |
+| 🗄️ `DB` | **Persistência isolada** (database-per-service) |
+
+### 📐 Princípios Arquiteturais
+
+- **Decomposição por domínio de negócio** (bounded contexts)
+- **Baixo acoplamento** entre serviços
+- **Database-per-Service** — nenhum banco é compartilhado
+- **REST** para operações síncronas
+- **Eventos** (`DestinationViewed`, comentários, favoritos) para processamento assíncrono
+- **AWS / GCP** para o experimento multi-cloud
+
+### Os 3 Microsserviços
 
 | Microsserviço | Responsabilidade | Tecnologia | Provedor |
 |---------------|------------------|------------|----------|
