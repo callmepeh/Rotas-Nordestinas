@@ -1,64 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest } from "next/server";
+import { proxyToGateway } from "@/lib/apiGatewayProxy";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ userID: string }> }
-) {
-  try {
-    const { userID } = await params;
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Token não fornecido." },
-        { status: 401 }
-      );
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Não autorizado." },
-        { status: 401 }
-      );
-    }
-
-    const { data, error } = await supabase
-      .from("favoritos")
-      .select(
-        `
-        id,
-        cidadeID,
-        Cidades (
-          id,
-          nomecidade,
-          url_imagem
-        )
-      `
-      )
-      .eq("userid", userID);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    const favoritosFormatados = (data || []).map((fav: any) => ({
-      id: fav.id,
-      cidadeID: fav.cidadeID,
-      nomecidade: fav.Cidades?.nomecidade ?? "",
-      url_imagem: fav.Cidades?.url_imagem ?? "",
-    }));
-
-    return NextResponse.json(favoritosFormatados);
-  } catch (err) {
-    return NextResponse.json(
-      { error: "Erro interno no servidor" },
-      { status: 500 }
-    );
-  }
-}
+export const dynamic = "force-dynamic";
+export const GET = (request: NextRequest) => proxyToGateway(request);
+export const POST = (request: NextRequest) => proxyToGateway(request);
+export const PUT = (request: NextRequest) => proxyToGateway(request);
+export const PATCH = (request: NextRequest) => proxyToGateway(request);
+export const DELETE = (request: NextRequest) => proxyToGateway(request);
+export const OPTIONS = (request: NextRequest) => proxyToGateway(request);
+export const HEAD = (request: NextRequest) => proxyToGateway(request);

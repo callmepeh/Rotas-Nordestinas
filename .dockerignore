@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env.*
+backend
+frontend
+infra
+docs
+scripts
+Topicos em Nuvem (Juliana))
+*.pdf
+*.txt
+coverage
+*.tsbuildinfo

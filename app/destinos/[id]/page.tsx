@@ -88,9 +88,9 @@ const DestinationDetailPage: React.FC = () => {
           });
           const data = await response.json();
           const favoriteIds = data.map(
-            (fav: { cidadeID: number }) => fav.cidadeID
+            (fav: { cidadeID: string }) => fav.cidadeID
           );
-          if (favoriteIds.includes(parseInt(id, 10))) {
+          if (favoriteIds.includes(id)) {
             setIsFavorited(true);
           }
         } catch (err) {
@@ -141,7 +141,7 @@ const DestinationDetailPage: React.FC = () => {
     }
 
     const token = localStorage.getItem("token");
-    const cidadeID = parseInt(id, 10);
+    const cidadeID = id;
     const payload = { userID: user.id, cidadeID };
 
     try {
@@ -194,7 +194,7 @@ const DestinationDetailPage: React.FC = () => {
         },
         body: JSON.stringify({
           userID: user.id,
-          cidadeID: parseInt(id, 10),
+          cidadeID: id,
           mensagem: newCommentText,
         }),
       });

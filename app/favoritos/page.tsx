@@ -9,7 +9,7 @@ import Link from "next/link";
 
 interface Favorito {
   id: number;
-  cidadeID: number;
+  cidadeID: string;
   nomeCidade: string;
   url_imagem?: string;
 }
@@ -17,10 +17,10 @@ interface Favorito {
 export default function Favourites() {
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [loading, setLoading] = useState(true);
-  const [removingId, setRemovingId] = useState<number | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
-    cidadeID: number;
+    cidadeID: string;
     nomeCidade: string;
   } | null>(null);
   const { user, token, isAuthenticated } = useAuth();
@@ -56,7 +56,7 @@ export default function Favourites() {
     }
   };
 
-  const removerFavorito = async (rotaID: number) => {
+  const removerFavorito = async (rotaID: string) => {
     if (!user || !token) return;
 
     setRemovingId(rotaID);

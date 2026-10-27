@@ -1,273 +1,44 @@
 # 🌵 Rotas Nordestinas
 
-Plataforma digital para promoção do turismo sustentável e valorização cultural no Nordeste do Brasil.
+Portal de turismo do Nordeste brasileiro. Mantém Next.js 15, React 19 e TypeScript na interface, agora integrado a serviços Express com persistência relacional independente.
 
-**Projeto:** Rotas Nordestinas — Plataforma de Turismo no Nordeste Brasileiro
-**Instituição:** Universidade Federal do Piauí (UFPI) — 2026.2
-**Docente:** Profª Dra. Juliana Oliveira de Carvalho
+## Funcionalidades
 
----
+- Explorar cidades com mapas, descrição e imagens
+- Pontos turísticos, meios de chegada, atividades e dicas
+- Cadastro, login e perfil com JWT
+- Comentários, favoritos e sugestões de rota
 
-## 💡 Sobre o Projeto
+## Arquitetura implementada
 
-O **Rotas Nordestinas** é uma plataforma web que reúne **rotas turísticas, culturais e gastronômicas** do Nordeste brasileiro. Seu objetivo é facilitar o acesso de turistas e moradores a informações sobre **locais, eventos e serviços regionais**, valorizando a cultura local e promovendo o **turismo sustentável**.
+O Next.js recebe o tráfego do browser e encaminha `/api/*` ao API Gateway Express. O gateway roteia autenticação e perfil para Identity Service e as demais rotas para Destinations/Business Service. Cada serviço usa seu próprio banco PostgreSQL. Os UUIDs de usuário são referências opacas no banco de destinos; não há FK cross-service. Veja [arquitetura](./docs/architecture/README.md).
 
-### Funcionalidades
+## Rodar localmente
 
-| Funcionalidade | Descrição |
-|---------------|-----------|
-| 🏙️ **Explorar Cidades** | Ver todas as cidades do Nordeste com fotos, descrições e coordenadas no mapa |
-| 📍 **Pontos Turísticos** | Descobrir praias, museus, parques e atrações de cada cidade |
-| ✈️ **Como Chegar** | Ver opções de transporte (terrestre, aéreo, marítimo) |
-| 🎯 **Atividades** | Conhecer atividades disponíveis: trilhas, passeios, festas |
-| 💡 **Dicas** | Receber dicas de viagem: melhor época, o que levar |
-| 💬 **Comentários** | Compartilhar experiências e ler feedbacks |
-| ❤️ **Favoritos** | Salvar cidades favoritas |
-| 🗺️ **Mapa Interativo** | Visualizar destinos usando Leaflet |
-| ✍️ **Sugerir Rota** | Enviar sugestões de novas cidades |
-
----
-
-## 🏗️ Arquitetura
-
-O sistema é uma **arquitetura em microsserviços** com 3 serviços independentes, expostos por um **API Gateway** e desacoplados por um **barramento de eventos**. Os dois diagramas abaixo explicam a aplicação: o primeiro mostra o **fluxo lógico de requisições e eventos**; o segundo, a **visão de deploy multi-cloud**.
-
-### 1️⃣ Visão Lógica — Fluxo de Requisições e Eventos
-
-```mermaid
-flowchart LR
-    U1(["👤 Usuário"])
-    U2(["👤 Usuário"])
-    GW(["API<br/>Gateway"])
-
-    subgraph AWS["☁️ AWS — Core da Aplicação"]
-        DEST(["DESTINO<br/>SERVICE"])
-        DDB[("🗄️ PostgreSQL")]
-        AUTH(["AUTH<br/>SERVICE"])
-        ADB[("🗄️ PostgreSQL")]
-    end
-
-    subgraph GCP["☁️ GCP — Analytics"]
-        BROKER(["PUB/SUB<br/>BROKER"])
-        ANA(["Analytics<br/>Service"])
-        GDB[("🗄️ SQLite")]
-    end
-
-    U1 --> GW
-    U2 --> GW
-    GW --> DEST
-    GW --> AUTH
-    DEST -->|Query| DDB
-    AUTH -->|Query| ADB
-    DEST -. "Async event 'view'" .-> BROKER
-    BROKER -.->|Subscribe| ANA
-    ANA -->|Query| GDB
-```
-
-**Como a aplicação funciona neste fluxo:**
-
-1. **Entrada única:** todos os usuários passam pelo **API Gateway**, responsável por HTTPS, roteamento e autenticação.
-2. **Conteúdo turístico (síncrono):** o gateway roteia para o **Destino Service**, que consulta seu PostgreSQL isolado e devolve cidades, pontos turísticos, como chegar, atividades, dicas, comentários e favoritos.
-3. **Identidade (síncrona):** cadastro, login e perfil passam pelo **Auth Service**, que consulta seu próprio PostgreSQL e emite tokens **JWT**.
-4. **Telemetria (assíncrona):** quando um usuário visualiza um destino, o Destino Service publica o evento `"view"` no **Pub/Sub Broker** e responde ao usuário sem esperar. O **Analytics Service** (GCP) assina o tópico, consome o evento em background e grava as métricas no **SQLite** — a navegação nunca bloqueia por causa de analytics.
-
-### 2️⃣ Visão Multi-cloud — Deploy AWS + GCP
-
-```mermaid
-flowchart LR
-    CLIENT["WEB CLIENT<br/>Next.js • React • TypeScript"]
-
-    subgraph AWS["AWS CLOUD — CORE DA APLICAÇÃO"]
-        GW["API GATEWAY<br/>HTTPS • Routing • Authentication"]
-        ID["IDENTITY SERVICE<br/>Node.js • JWT"]
-        IDB[("Identity DB<br/>PostgreSQL")]
-        DS["DESTINATIONS SERVICE<br/>Node.js • Express • Prisma"]
-        DDB[("Destinations DB<br/>PostgreSQL")]
-        BUS["EVENT BUS<br/>SNS → SQS"]
-    end
-
-    subgraph GCP["GCP CLOUD — ANALYTICS"]
-        ANA["ANALYTICS SERVICE<br/>Node.js Worker"]
-        ADB[("Analytics DB<br/>SQLite")]
-    end
-
-    CLIENT -->|REST| GW
-    GW -->|REST| ID
-    GW -->|REST| DS
-    ID -->|DB| IDB
-    DS -->|DB| DDB
-    DS -.->|EVENT| BUS
-    BUS -.->|Subscribe| ANA
-    ANA -->|DB| ADB
-```
-
-**Correspondência com os microsserviços do projeto:**
-
-| Diagrama | Microsserviço do projeto | Provedor |
-|----------|--------------------------|----------|
-| Identity Service | **Portal & Auth** | AWS |
-| Destinations Service | **Destinos Core** | AWS |
-| Analytics Service | **Analytics & Notification** | GCP |
-
-**Legenda:**
-
-| Símbolo | Significado |
-|---------|-------------|
-| ➡️ `REST` | Comunicação **síncrona** (resposta imediata) |
-| ⤍ `EVENT` | Comunicação **assíncrona** (evento desacoplado) |
-| 🗄️ `DB` | **Persistência isolada** (database-per-service) |
-
-### 📐 Princípios Arquiteturais
-
-- **Decomposição por domínio de negócio** (bounded contexts)
-- **Baixo acoplamento** entre serviços
-- **Database-per-Service** — nenhum banco é compartilhado
-- **REST** para operações síncronas
-- **Eventos** (`DestinationViewed`, comentários, favoritos) para processamento assíncrono
-- **AWS / GCP** para o experimento multi-cloud
-
-### Os 3 Microsserviços
-
-| Microsserviço | Responsabilidade | Tecnologia | Provedor |
-|---------------|------------------|------------|----------|
-| **Portal & Auth** | Frontend + Identidade | Next.js / JWT | AWS |
-| **Destinos Core** | Conteúdo Turístico | Express / Prisma | AWS |
-| **Analytics** | Métricas + Notificações | Node.js / SQLite | GCP |
-
----
-
-## 📚 Documentação
-
-A documentação completa está organizada na pasta `docs/`:
-
-```
-docs/
-├── README.md                    # Índice principal
-├── architecture/                # Arquitetura do sistema
-│   ├── README.md               # Visão geral
-│   ├── bounded-contexts.md     # Decomposição em microsserviços
-│   ├── communication-patterns.md
-│   └── monolith-to-microservices.md
-├── master/                      # Pós-Graduação (TSD) — Multi-cloud
-│   ├── README.md
-│   ├── aws/                     # Amazon Web Services
-│   ├── gcp/                     # Google Cloud Platform
-│   └── azure/                   # Microsoft Azure
-├── undergraduate/               # Graduação (TES) — Deploy na AWS
-│   └── README.md
-├── infrastructure/              # Infraestrutura e deploy
-│   └── README.md
-├── api/                         # Referência da API
-│   └── README.md
-└── testing/                     # Testes de carga
-    └── README.md
-```
-
-### Início Rápido
-
-1. [Visão Geral da Arquitetura](./docs/architecture/README.md)
-2. [Decomposição em Microsserviços](./docs/architecture/bounded-contexts.md)
-3. [Guia de Deploy na AWS](./docs/undergraduate/README.md)
-4. [Multi-cloud (AWS + GCP + Azure)](./docs/master/README.md)
-5. [Testes de Carga](./docs/testing/README.md)
-
----
-
-## 🚀 Tecnologias
-
-| Camada | Tecnologia |
-|--------|------------|
-| **Frontend** | Next.js 15 + React 19 + TypeScript |
-| **Backend** | Node.js + Express + Prisma ORM |
-| **Bancos** | PostgreSQL (Auth + Core) + SQLite (Analytics) |
-| **Autenticação** | JWT (jsonwebtoken) |
-| **Mapas** | Leaflet + React-Leaflet |
-| **Containers** | Docker + Docker Compose |
-| **Deploy** | AWS EC2/ECS + GCP Compute Engine |
-| **Testes** | k6 (carga e latência inter-cloud) |
-
----
-
-## 📋 Cronograma
-
-### TES (Graduação)
-| Data | Entrega |
-|------|---------|
-| 15/09/2026 | Artigo Survey — Cloud services |
-| 20/10/2026 | Artigo Survey — Virtualização e containers |
-| 27/10/2026 | Entrega parcial — 30% da aplicação |
-| 17/11/2026 | Deploy na AWS **sem Docker** (EC2 puro) |
-| 01/12/2026 | Deploy na AWS **com Docker** |
-| 08/12/2026 | Artigo comparativo: EC2 vs Docker |
-
-### TSD (Pós-Graduação)
-| Data | Entrega |
-|------|---------|
-| 02/10/2026 | Artigo Survey |
-| 16/10/2026 | Artigo Survey |
-| 16/11/2026 | App na AWS + GCP (multi-cloud) |
-| 23/11/2026 | App com Docker na AWS |
-| 11/12/2026 | Artigo final com experimentos |
-
----
-
-## 🛠️ Setup do Projeto
-
-### Pré-requisitos
-- Node.js 20+
-- npm ou pnpm
-- Docker e Docker Compose (opcional)
-
-### Instalação
+Requer Node.js 22+, npm e Docker Compose.
 
 ```bash
-# Clonar repositório
-git clone https://github.com/seu-usuario/rotas-nordestinas.git
-cd rotas-nordestinas
-
-# Instalar dependências
-npm install
-
-# Configurar variáveis de ambiente
 cp .env.example .env
-
-# Iniciar em desenvolvimento
-npm run dev
+docker compose --env-file .env -f infra/docker-compose.yml up --build -d
 ```
 
-### Docker
+Portal em `http://localhost:3000`; estado dos serviços em `http://localhost:5000/health`. Configure segredos próprios em `.env`. `.env.example` contém apenas valores para desenvolvimento local.
+
+Para executar o teste de integração contra os bancos e APIs locais:
 
 ```bash
-# Subir todos os serviços
-cd infra
-docker-compose up -d
-
-# Verificar status
-docker-compose ps
+docker compose --env-file .env -f infra/docker-compose.yml --profile tests run --rm integration-tests
 ```
 
----
+## Persistência
 
-## 📊 Testes
+- Esquemas SQL: [`infra/db/auth.sql`](./infra/db/auth.sql), [`infra/db/core.sql`](./infra/db/core.sql)
+- Modelos Prisma e geração: [`backend/prisma`](./backend/prisma)
+- Migração de dados do esquema legado: [`scripts/migrations/001_legacy_core_data.sql`](./scripts/migrations/001_legacy_core_data.sql)
+- Opções PostgreSQL AWS/Azure, custos e configuração: [infraestrutura](./docs/infrastructure/README.md)
 
-```bash
-# Instalar k6
-# macOS: brew install k6
-# Linux: sudo apt install k6
+Senhas de contas legadas não são recuperáveis em texto claro via exportação SQL; planeje redefinição ou migração de hash compatível. Não houve implantação em nuvem.
 
-# Executar teste de carga
-k6 run docs/testing/load-test.js
+## Critérios da disciplina
 
-# Executar teste inter-cloud
-k6 run docs/testing/multi-cloud-test.js
-```
-
----
-
-## 📄 Licença
-
-Desenvolvido para a disciplina de **Tópicos em Nuvem** — UFPI 2026.2
-
----
-
-*Projeto organizado seguindo princípios de Clean Code — Rotas Nordestinas 2026.2*
+Os materiais da professora orientam arquitetura de microsserviços, uso de virtualização/containers, comparação de serviços e custos em provedores, e elasticidade. O comparativo e a escolha financeiramente viável estão documentados em [infraestrutura](./docs/infrastructure/README.md). A implantação prevista é configurável, mas deve ser executada e validada em conta AWS/Azure antes de ser considerada deploy real.

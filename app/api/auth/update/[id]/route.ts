@@ -1,76 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest } from "next/server";
+import { proxyToGateway } from "@/lib/apiGatewayProxy";
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    const body = await req.json();
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Token não fornecido." },
-        { status: 401 }
-      );
-    }
-
-    // Verify token
-    const {
-      data: { user: authUser },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !authUser) {
-      return NextResponse.json(
-        { error: "Token inválido ou expirado." },
-        { status: 401 }
-      );
-    }
-
-    if (authUser.id !== id) {
-      return NextResponse.json(
-        { error: "Não autorizado." },
-        { status: 403 }
-      );
-    }
-
-    const { action, ...updates } = body;
-    let novaFuncao: string | undefined;
-    let mensagem = "";
-
-    if (action === "request_collaborator") {
-      novaFuncao = "colaborador_pendente";
-      mensagem = "Sua solicitação foi enviada e está aguardando análise!";
-    } else if (action === "update_profile") {
-      mensagem = "Perfil atualizado com sucesso!";
-    }
-
-    const { data, error } = await supabase
-      .from("users")
-      .update({
-        ...updates,
-        ...(novaFuncao && { funcao: novaFuncao }),
-      })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      message: mensagem,
-      user: data,
-    });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { error: "Erro ao atualizar perfil." },
-      { status: 500 }
-    );
-  }
-}
+export const dynamic = "force-dynamic";
+export const GET = (request: NextRequest) => proxyToGateway(request);
+export const POST = (request: NextRequest) => proxyToGateway(request);
+export const PUT = (request: NextRequest) => proxyToGateway(request);
+export const PATCH = (request: NextRequest) => proxyToGateway(request);
+export const DELETE = (request: NextRequest) => proxyToGateway(request);
+export const OPTIONS = (request: NextRequest) => proxyToGateway(request);
+export const HEAD = (request: NextRequest) => proxyToGateway(request);

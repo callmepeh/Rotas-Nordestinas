@@ -1,28 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest } from "next/server";
+import { proxyToGateway } from "@/lib/apiGatewayProxy";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ cidadeId: string }> }
-) {
-  try {
-    const { cidadeId } = await params;
-
-    const { data, error } = await supabase
-      .from("pontos_turisticos")
-      .select("*")
-      .eq("cidadeid", cidadeId);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json(data);
-  } catch (err) {
-    console.error("Erro ao listar pontos turísticos:", err);
-    return NextResponse.json(
-      { error: "Erro interno no servidor." },
-      { status: 500 }
-    );
-  }
-}
+export const dynamic = "force-dynamic";
+export const GET = (request: NextRequest) => proxyToGateway(request);
+export const POST = (request: NextRequest) => proxyToGateway(request);
+export const PUT = (request: NextRequest) => proxyToGateway(request);
+export const PATCH = (request: NextRequest) => proxyToGateway(request);
+export const DELETE = (request: NextRequest) => proxyToGateway(request);
+export const OPTIONS = (request: NextRequest) => proxyToGateway(request);
+export const HEAD = (request: NextRequest) => proxyToGateway(request);

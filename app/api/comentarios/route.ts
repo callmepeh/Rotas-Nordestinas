@@ -1,49 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest } from "next/server";
+import { proxyToGateway } from "@/lib/apiGatewayProxy";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { userid: userID, cidadeid: cidadeID, mensagem } = await req.json();
-
-    if (!userID || !cidadeID) {
-      return NextResponse.json(
-        { error: "userID e cidadeID são obrigatórios." },
-        { status: 400 }
-      );
-    }
-
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-
-    if (token) {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser(token);
-
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: "Não autorizado." },
-          { status: 401 }
-        );
-      }
-    }
-
-    const { data, error } = await supabase
-      .from("comentarios")
-      .insert([{ userid: userID, cidadeid: cidadeID, mensagem }])
-      .select();
-
-    if (error) {
-      console.error("Erro Supabase ao adicionar comentário:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json(data[0], { status: 201 });
-  } catch (err) {
-    console.error("Erro ao adicionar comentário:", err);
-    return NextResponse.json(
-      { error: "Erro interno no servidor." },
-      { status: 500 }
-    );
-  }
-}
+export const dynamic = "force-dynamic";
+export const GET = (request: NextRequest) => proxyToGateway(request);
+export const POST = (request: NextRequest) => proxyToGateway(request);
+export const PUT = (request: NextRequest) => proxyToGateway(request);
+export const PATCH = (request: NextRequest) => proxyToGateway(request);
+export const DELETE = (request: NextRequest) => proxyToGateway(request);
+export const OPTIONS = (request: NextRequest) => proxyToGateway(request);
+export const HEAD = (request: NextRequest) => proxyToGateway(request);

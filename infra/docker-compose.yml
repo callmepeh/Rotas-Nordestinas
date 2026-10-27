@@ -1,0 +1,112 @@
+name: rotas-nordestinas
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    ports: ["3000:3000"]
+    environment:
+      API_GATEWAY_URL: http://gateway:5000
+      PORT: 3000
+    depends_on:
+      gateway: { condition: service_healthy }
+
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rotas_auth
+      POSTGRES_USER: ${POSTGRES_USER:-rotas}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?Set AUTH_DB_PASSWORD}
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+      - ./db/auth.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d rotas_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  core-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rotas_core
+      POSTGRES_USER: ${POSTGRES_USER:-rotas}
+      POSTGRES_PASSWORD: ${CORE_DB_PASSWORD:?Set CORE_DB_PASSWORD}
+    volumes:
+      - core-data:/var/lib/postgresql/data
+      - ./db/core.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d rotas_core"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  identity:
+    build: ../backend
+    command: ["node", "src/services/identity-server.js"]
+    environment:
+      PORT: 3001
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql://${POSTGRES_USER:-rotas}:${AUTH_DB_PASSWORD}@auth-db:5432/rotas_auth?schema=public}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET with at least 32 characters}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?Set SERVICE_TOKEN}
+    depends_on:
+      auth-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  destinations:
+    build: ../backend
+    command: ["node", "src/services/destinations-server.js"]
+    environment:
+      PORT: 3002
+      CORE_DATABASE_URL: ${CORE_DATABASE_URL:-postgresql://${POSTGRES_USER:-rotas}:${CORE_DB_PASSWORD}@core-db:5432/rotas_core?schema=public}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET with at least 32 characters}
+      IDENTITY_SERVICE_URL: http://identity:3001
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?Set SERVICE_TOKEN}
+    depends_on:
+      core-db: { condition: service_healthy }
+      identity: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  gateway:
+    build: ../backend
+    command: ["node", "src/gateway/server.js"]
+    ports: ["5000:5000"]
+    environment:
+      PORT: 5000
+      IDENTITY_SERVICE_URL: http://identity:3001
+      DESTINATIONS_SERVICE_URL: http://destinations:3002
+    depends_on:
+      identity: { condition: service_healthy }
+      destinations: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  integration-tests:
+    build: ../backend
+    profiles: ["tests"]
+    command: ["node", "tests/integration.js"]
+    environment:
+      API_GATEWAY_URL: http://gateway:5000
+      AUTH_DATABASE_URL: postgresql://${POSTGRES_USER:-rotas}:${AUTH_DB_PASSWORD}@auth-db:5432/rotas_auth?schema=public
+      CORE_DATABASE_URL: postgresql://${POSTGRES_USER:-rotas}:${CORE_DB_PASSWORD}@core-db:5432/rotas_core?schema=public
+    depends_on:
+      gateway: { condition: service_healthy }
+      auth-db: { condition: service_healthy }
+      core-db: { condition: service_healthy }
+
+volumes:
+  auth-data:
+  core-data:

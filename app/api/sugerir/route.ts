@@ -1,96 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest } from "next/server";
+import { proxyToGateway } from "@/lib/apiGatewayProxy";
 
-export async function POST(req: NextRequest) {
-  try {
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Token não fornecido." },
-        { status: 401 }
-      );
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Token inválido ou expirado." },
-        { status: 401 }
-      );
-    }
-
-    const userID = user.id;
-
-    const {
-      estado,
-      nomecidade,
-      latitude,
-      longitude,
-      imagemCapa,
-      descricaoCidade,
-      comoChegar,
-      pontosTuristicos,
-      atividades,
-      dicas,
-    } = await req.json();
-
-    if (!estado || !nomecidade) {
-      return NextResponse.json(
-        { error: "Estado e cidade são obrigatórios." },
-        { status: 400 }
-      );
-    }
-
-    if (!latitude || !longitude) {
-      return NextResponse.json(
-        { error: "Latitude e longitude são obrigatórias." },
-        { status: 400 }
-      );
-    }
-
-    const payload = {
-      userID,
-      estado,
-      nomecidade,
-      imagemCapa: imagemCapa || null,
-      descricaoCidade: descricaoCidade || null,
-      comoChegar: JSON.stringify(comoChegar || []),
-      pontosTuristicos: JSON.stringify(pontosTuristicos || []),
-      atividades: JSON.stringify(atividades || []),
-      dicas: JSON.stringify(dicas || []),
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      dataSubmissao: new Date().toISOString(),
-      status: "pendente",
-      obsAdmin: "",
-      idAdmin: null,
-      cidadeID: null,
-    };
-
-    const { error } = await supabase.from("sugestoes_de_rota").insert([payload]);
-
-    if (error) {
-      console.error("ERRO SUPABASE AO INSERIR:", error);
-      return NextResponse.json(
-        { error: "Erro ao enviar sugestão" },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: "Sugestão enviada com sucesso!", data: payload },
-      { status: 201 }
-    );
-  } catch (err) {
-    console.error("ERRO AO SUGERIR ROTA:", err);
-    return NextResponse.json(
-      { error: "Erro interno no servidor" },
-      { status: 500 }
-    );
-  }
-}
+export const dynamic = "force-dynamic";
+export const GET = (request: NextRequest) => proxyToGateway(request);
+export const POST = (request: NextRequest) => proxyToGateway(request);
+export const PUT = (request: NextRequest) => proxyToGateway(request);
+export const PATCH = (request: NextRequest) => proxyToGateway(request);
+export const DELETE = (request: NextRequest) => proxyToGateway(request);
+export const OPTIONS = (request: NextRequest) => proxyToGateway(request);
+export const HEAD = (request: NextRequest) => proxyToGateway(request);

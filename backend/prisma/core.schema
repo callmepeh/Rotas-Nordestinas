@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/core"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CORE_DATABASE_URL")
+}
+
+model State {
+  id     Int    @id @default(autoincrement())
+  nome   String @db.VarChar(100)
+  sigla  String @unique @db.Char(2)
+  cities City[]
+  @@map("states")
+}
+
+model City {
+  id          String   @id @default(uuid()) @db.Uuid
+  nomeCidade  String   @map("nome_cidade") @db.VarChar(255)
+  urlImagem   String?  @map("url_imagem") @db.Text
+  descricao   String?  @db.Text
+  latitude    Float?
+  longitude   Float?
+  estadoId    Int      @map("estado_id")
+  criadoPor   String?  @map("criado_por") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  estado      State    @relation(fields: [estadoId], references: [id], onDelete: Restrict)
+  pontos      TouristPoint[]
+  comoChegar  TravelOption[]
+  atividades  Activity[]
+  dicas       Tip[]
+  comentarios Comment[]
+  favoritos   Favorite[]
+  sugestoes   RouteSuggestion[]
+  @@index([nomeCidade])
+  @@index([estadoId])
+  @@map("cities")
+}
+
+model TouristPoint {
+  id          BigInt @id @default(autoincrement())
+  cidadeId    String @map("cidade_id") @db.Uuid
+  titulo      String @db.VarChar(255)
+  descricao   String? @db.Text
+  urlImagem   String? @map("url_imagem") @db.Text
+  cidade      City @relation(fields: [cidadeId], references: [id], onDelete: Cascade)
+  @@index([cidadeId])
+  @@map("tourist_points")
+}
+
+model TravelOption {
+  id          BigInt @id @default(autoincrement())
+  cidadeId    String @map("cidade_id") @db.Uuid
+  tipo        String @default("Terrestre") @db.VarChar(50)
+  titulo      String @db.VarChar(255)
+  descricao   String? @db.Text
+  cidade      City @relation(fields: [cidadeId], references: [id], onDelete: Cascade)
+  @@index([cidadeId])
+  @@map("travel_options")
+}
+
+model Activity {
+  id          BigInt @id @default(autoincrement())
+  cidadeId    String @map("cidade_id") @db.Uuid
+  titulo      String @db.VarChar(255)
+  descricao   String? @db.Text
+  urlImagem   String? @map("url_imagem") @db.Text
+  cidade      City @relation(fields: [cidadeId], references: [id], onDelete: Cascade)
+  @@index([cidadeId])
+  @@map("activities")
+}
+
+model Tip {
+  id          BigInt @id @default(autoincrement())
+  cidadeId    String @map("cidade_id") @db.Uuid
+  titulo      String @db.VarChar(255)
+  descricao   String? @db.Text
+  urlImagem   String? @map("url_imagem") @db.Text
+  cidade      City @relation(fields: [cidadeId], references: [id], onDelete: Cascade)
+  @@index([cidadeId])
+  @@map("tips")
+}
+
+model Comment {
+  id        BigInt   @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  cidadeId  String   @map("cidade_id") @db.Uuid
+  mensagem  String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  cidade    City     @relation(fields: [cidadeId], references: [id], onDelete: Cascade)
+  @@index([cidadeId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Favorite {
+  id        BigInt   @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  cidadeId  String   @map("cidade_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  cidade    City     @relation(fields: [cidadeId], references: [id], onDelete: Cascade)
+  @@unique([userId, cidadeId])
+  @@index([cidadeId])
+  @@map("favorites")
+}
+
+model RouteSuggestion {
+  id                 BigInt   @id @default(autoincrement())
+  userId             String   @map("user_id") @db.Uuid
+  estado              String   @db.VarChar(100)
+  nomeCidade          String   @map("nome_cidade") @db.VarChar(255)
+  latitude            Float
+  longitude           Float
+  imagemCapa          String?  @map("imagem_capa") @db.Text
+  descricaoCidade     String?  @map("descricao_cidade") @db.Text
+  comoChegar          Json?    @map("como_chegar")
+  pontosTuristicos    Json?    @map("pontos_turisticos")
+  atividades          Json?
+  dicas               Json?
+  dataSubmissao       DateTime @default(now()) @map("data_submissao") @db.Timestamptz
+  status              String   @default("pendente") @db.VarChar(20)
+  obsAdmin            String?  @default("") @map("obs_admin") @db.Text
+  idAdmin             String?  @map("id_admin") @db.Uuid
+  cidadeId            String?  @map("cidade_id") @db.Uuid
+  cidade              City?    @relation(fields: [cidadeId], references: [id], onDelete: SetNull)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  @@index([userId])
+  @@index([status])
+  @@map("route_suggestions")
+}

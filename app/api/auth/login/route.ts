@@ -1,48 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { NextRequest } from "next/server";
+import { proxyToGateway } from "@/lib/apiGatewayProxy";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { email, senha } = await req.json();
-
-    const { data: loginData, error: loginError } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password: senha,
-      });
-
-    if (loginError || !loginData?.user) {
-      return NextResponse.json(
-        { error: "Credenciais inválidas." },
-        { status: 401 }
-      );
-    }
-
-    const userId = loginData.user.id;
-
-    const { data: profile, error: profileError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) {
-      return NextResponse.json(
-        { error: profileError.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({
-      message: "Login realizado com sucesso.",
-      token: loginData.session.access_token,
-      user: profile,
-    });
-  } catch (err) {
-    console.error("Erro no login:", err);
-    return NextResponse.json(
-      { error: "Erro interno no servidor." },
-      { status: 500 }
-    );
-  }
-}
+export const dynamic = "force-dynamic";
+export const GET = (request: NextRequest) => proxyToGateway(request);
+export const POST = (request: NextRequest) => proxyToGateway(request);
+export const PUT = (request: NextRequest) => proxyToGateway(request);
+export const PATCH = (request: NextRequest) => proxyToGateway(request);
+export const DELETE = (request: NextRequest) => proxyToGateway(request);
+export const OPTIONS = (request: NextRequest) => proxyToGateway(request);
+export const HEAD = (request: NextRequest) => proxyToGateway(request);

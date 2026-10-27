@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "node src/server.js",
-  "dev": "nodemon src/server.js",
-  "test": "cross-env NODE_ENV=test jest --runInBand"
+    "start": "node src/gateway/server.js",
+    "start:identity": "node src/services/identity-server.js",
+    "start:destinations": "node src/services/destinations-server.js",
+    "dev": "nodemon src/gateway/server.js",
+    "db:generate": "prisma generate --schema prisma/auth.schema && prisma generate --schema prisma/core.schema",
+    "test": "node tests/integration.js"
 },
   "keywords": [],
   "author": "",
@@ -13,16 +16,11 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.19.0",
-    "@supabase/supabase-js": "^2.80.0",
-    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "prisma": "^6.19.0"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0",
-    "jest": "^30.2.0",
-    "nodemon": "^3.1.11",
-    "supertest": "^7.1.4"
+    "nodemon": "^3.1.11"
   }
 }

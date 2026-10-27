@@ -1,45 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const BUCKET_NAME = "rotas-nordestinas";
-
-/**
- * Uploads an image to Supabase Storage and returns the public URL.
- */
-export async function uploadImage(
-  file: File,
-  folder: string = "sugestoes"
-): Promise<string> {
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-  // Generate a unique file path
-  const ext = file.name.split(".").pop() || "jpg";
-  const fileName = `${folder}/${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2, 8)}.${ext}`;
-
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(fileName, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (error) {
-    // If bucket doesn't exist, tell user how to create it
-    if (error.message?.includes("bucket")) {
-      throw new Error(
-        `Bucket "${BUCKET_NAME}" não encontrado. Crie um bucket público com este nome no Supabase Dashboard > Storage.`
-      );
-    }
-    throw new Error(`Erro ao fazer upload: ${error.message}`);
-  }
-
-  // Get public URL
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
-
-  return publicUrl;
+/** Encodes an image for storage in the destination database. Configure object storage
+ * and replace this adapter for production catalogs with large image collections. */
+export async function uploadImage(file: File, _folder = "sugestoes"): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error("Selecione um arquivo de imagem.");
+  if (file.size > 4 * 1024 * 1024) throw new Error("A imagem deve ter no máximo 4 MB.");
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Não foi possível ler a imagem."));
+    reader.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+    reader.readAsDataURL(file);
+  });
 }
